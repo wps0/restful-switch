@@ -7,5 +7,9 @@ from db import DB_TABLE_POLLS
 
 class PollEndpoint(Resource):
     def get(self):
-        DB_TABLE_POLLS.find_many({"publish_date": {$lt: datetime.utcnow()}})
+        for poll in DB_TABLE_POLLS.find({"publish_date": {"$lt": datetime.utcnow()}}):
+            print(poll.name)
         return "POST"
+
+    def put(self):
+        

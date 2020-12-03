@@ -1,6 +1,8 @@
 import sys
-
 import yaml
+
+# in seconds
+MAX_DB_RESPONSE_TIME = 5
 
 
 def load_config():

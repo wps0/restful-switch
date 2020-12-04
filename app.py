@@ -1,5 +1,7 @@
+import uuid
+
 from flask import Flask, make_response
-from flask_restful import Api, Resource, marshal_with, fields
+from flask_restful import Api, Resource, marshal_with, fields, abort
 
 import config
 
@@ -21,25 +23,17 @@ class RestfulApi(Api):
 
 app = Flask(__name__)
 api = RestfulApi(app, prefix="/v1")
-app_cfg = config.load_config()
-app.config['SECRET_KEY'] = app_cfg.get("secret_key")
-print(app_cfg)
+config.init_config(app)
+print(app.config)
 
-
-class Homepage(Resource):
-    # @marshal_with(API_RESPONSE_MARSHAL_FIELDS, "data")
-    def get(self):
-        code: int = 200
-
-        return {"task": 'Hello World!', "code": code}, 200, {"asd": "ds"}  # content, response code, headers
-
-
-api.add_resource(Homepage, "/")
 from endpoints.polls import PollEndpoint, SinglePollEndpoint, PollVoteEndpoint
+from endpoints.fileserver import UUIDFileServerEndpoint, UploadFileEndpoint
 
 api.add_resource(PollEndpoint, "/poll")
 api.add_resource(SinglePollEndpoint, "/poll/<string:poll_id>")
 api.add_resource(PollVoteEndpoint, "/poll/<string:poll_id>/vote")
+api.add_resource(UploadFileEndpoint, "/file")
+api.add_resource(UUIDFileServerEndpoint, "/file/<string:file_id>")
 
 if __name__ == '__main__':
     app.run(debug=True)

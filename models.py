@@ -1,11 +1,10 @@
 import time
 
 from typing import List
-
 from bson import ObjectId
 
 
-class Voter:
+class UserInteraction:
     user_id: ObjectId
     create_date: int
     ip_addr: str
@@ -22,8 +21,8 @@ class Voter:
         self.user_id = user_id
 
     def __str__(self):
-        from db import DOCUMENT_VOTER
-        return DOCUMENT_VOTER \
+        from db import DOCUMENT_USER_INTERACTION
+        return DOCUMENT_USER_INTERACTION \
             .replace("%user_id%", str(self.user_id)) \
             .replace("%create_date%", str(self.create_date)) \
             .replace("%ip_addr%", self.ip_addr) \
@@ -45,9 +44,9 @@ class Option:
 class Vote:
     poll_id: ObjectId
     content: int
-    voter: Voter
+    voter: UserInteraction
 
-    def __init__(self, poll_id: ObjectId, option_nr: int, voter: Voter):
+    def __init__(self, poll_id: ObjectId, option_nr: int, voter: UserInteraction):
         self.option_nr = option_nr
         self.poll_id = poll_id
         self.voter = voter
@@ -65,9 +64,10 @@ class Poll:
     desc: str
     publish_date: float
     create_date: float
-    options: List[Vote]
+    options: List[Option]
 
-    def __init__(self, title: str, publish_date: float, options: List[Vote], desc: str = "", create_date: float = time.time()):
+    def __init__(self, title: str, publish_date: float, options: List[Option], desc: str = "",
+                 create_date: float = time.time()):
         self.title = title
         self.desc = desc
         self.publish_date = publish_date
@@ -81,3 +81,24 @@ class Poll:
             .replace("%publish_date%", str(self.publish_date)) \
             .replace("%create_date%", str(self.create_date)) \
             .replace("%options%", "[" + "".join((str(el) + "," for el in self.options)).rsplit(",", 1)[0] + "]")
+
+
+class File:
+    file_path: str
+    hash: str
+    uploader: UserInteraction
+    create_date: int
+
+    def __init__(self, file_path: str, uploader: UserInteraction, h: str, create_date: int = time.time()):
+        self.file_path = file_path
+        self.hash = h
+        self.uploader = uploader
+        self.create_date = create_date
+
+    def __str__(self):
+        from db import DOCUMENT_FILE
+        return DOCUMENT_FILE\
+            .replace("%create_date%", str(self.create_date)) \
+            .replace("%file_path%", self.file_path) \
+            .replace("%hash%", self.hash) \
+            .replace("%uploader%", str(self.uploader))

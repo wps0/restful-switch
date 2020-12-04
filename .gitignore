@@ -136,3 +136,4 @@ dmypy.json
 cython_debug/
 .idea/
 res/config.yml
+/uploads

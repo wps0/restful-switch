@@ -5,22 +5,8 @@ from typing import List
 from bson import ObjectId
 from flask import request, jsonify
 from flask_restful import Resource, abort
-from pymongo.results import InsertOneResult
 
-from config import MAX_DB_RESPONSE_TIME
-from db import DB_TABLE_POLLS, DOCUMENT_POLL, DB_TABLE_VOTES
-
-
-def wait_for_acknowledgement(res: InsertOneResult):
-    pass
-    # resp_time = MAX_DB_RESPONSE_TIME
-    # print(res.acknowledged)
-    # while not res.acknowledged and resp_time > 0:
-    #     time.sleep(0.2)
-    #     resp_time -= 0.2
-    # if not res.acknowledged and resp_time <= 0:
-    #     abort(504)  # gateway timed out
-
+from db import DB_TABLE_POLLS, DB_TABLE_VOTES
 
 class PollEndpoint(Resource):
     def get(self):
@@ -84,7 +70,6 @@ class SinglePollEndpoint(Resource):
         if res is None:
             abort(404)
 
-        wait_for_acknowledgement(res)
         if res.deleted_count != 1:
             abort(500)
         return "", 204
@@ -115,9 +100,7 @@ class PollVoteEndpoint(Resource):
         print(to_be_inserted)
 
         res = DB_TABLE_VOTES.insert_one(to_be_inserted)
-        wait_for_acknowledgement(res)
         res = DB_TABLE_VOTES.find_one({"_id": ObjectId(res.inserted_id)})
-        wait_for_acknowledgement(res)
         res["_id"] = str(res["_id"])
         return res
 

@@ -22,6 +22,7 @@ class RestfulApi(Api):
 app = Flask(__name__)
 api = RestfulApi(app, prefix="/v1")
 app_cfg = config.load_config()
+app.config['SECRET_KEY'] = app_cfg.get("secret_key")
 print(app_cfg)
 
 

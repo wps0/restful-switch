@@ -8,6 +8,14 @@ from flask_restful import Resource, abort
 
 from db import DB_TABLE_POLLS, DB_TABLE_VOTES
 
+
+def verify_poll(poll_id: str):
+    from utils import escape_special_chars
+    escape_special_chars(poll_id)
+    if len(poll_id) != 24 or not ObjectId.is_valid(poll_id):
+        abort(400)
+
+
 class PollEndpoint(Resource):
     def get(self):
         resp = []
@@ -37,21 +45,9 @@ class PollEndpoint(Resource):
         return jsonify(code=200, data=js_replaced, messsage="OK")
 
 
-def escape_special_chars(string: str):
-    for c in string:
-        if c < '0' or '9' < c < 'A' or 'Z' < c < 'a' or c > 'z':
-            print(c)
-
-
-def poll_verification(poll_id: str):
-    escape_special_chars(poll_id)
-    if len(poll_id) != 24 or not ObjectId.is_valid(poll_id):
-        abort(400)
-
-
 class SinglePollEndpoint(Resource):
     def get(self, poll_id: str):
-        poll_verification(poll_id)
+        verify_poll(poll_id)
 
         resp = DB_TABLE_POLLS.find_one({"_id": ObjectId(poll_id)})
         if resp is None:
@@ -60,7 +56,7 @@ class SinglePollEndpoint(Resource):
         return jsonify(resp)
 
     def delete(self, poll_id: str):
-        poll_verification(poll_id)
+        verify_poll(poll_id)
 
         cnt = DB_TABLE_POLLS.count({"_id": ObjectId(poll_id)})
         if cnt != 1:
@@ -77,7 +73,7 @@ class SinglePollEndpoint(Resource):
 
 class PollVoteEndpoint(Resource):
     def post(self, poll_id: str):
-        poll_verification(poll_id)
+        verify_poll(poll_id)
         nr: int = 0
         try:
             print(request.json["option_nr"])
@@ -92,9 +88,9 @@ class PollVoteEndpoint(Resource):
         if 0 > nr or nr >= len(res["options"]):
             abort(400)
 
-        from models import Vote, Voter
+        from models import Vote, UserInteraction
         to_be_inserted = str(Vote(
-            ObjectId(poll_id), nr, Voter(request.remote_addr, str(request.user_agent))
+            ObjectId(poll_id), nr, UserInteraction(request.remote_addr, str(request.user_agent))
         ))
         to_be_inserted = json.loads(to_be_inserted)
         print(to_be_inserted)
@@ -105,7 +101,7 @@ class PollVoteEndpoint(Resource):
         return res
 
     def get(self, poll_id: str):
-        poll_verification(poll_id)
+        verify_poll(poll_id)
         vote_amount = {}
         for vote in DB_TABLE_VOTES.find({"poll_id": poll_id}):
             vopt = int(vote["vote_option"])

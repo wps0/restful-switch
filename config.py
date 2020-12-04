@@ -1,8 +1,12 @@
 import sys
 import yaml
 
-# in seconds
-MAX_DB_RESPONSE_TIME = 5
+from flask import Flask
+
+
+def init_config(app: Flask):
+    loaded_cfg = load_config()
+    insert_into_app_config(app, loaded_cfg)
 
 
 def load_config():
@@ -12,3 +16,10 @@ def load_config():
         except yaml.YAMLError as e:
             print(e)
             sys.exit(-1)
+
+
+def insert_into_app_config(app: Flask, cfg):
+    app.config["DB_URL"] = cfg.get("db_url")
+    app.config['SECRET_KEY'] = cfg.get("secret_key")
+    app.config["FILE_SECRET_KEY"] = cfg.get("file_hash_secret")
+    app.config["UPLOAD_DIR"] = cfg.get("upload_dir")

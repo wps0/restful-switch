@@ -1,3 +1,6 @@
 db_url: "URL"
 # The secret key for authentication purposes. Make sure it's kept private.
 secret_key: "your-secret-key"  # TODO: auto generate docker script
+# The secret key prepended to the file string
+file_hash_secret: "your-file-hash-secret"
+upload_dir: "/slash-followed-directory/"

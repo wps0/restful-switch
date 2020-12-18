@@ -27,7 +27,7 @@ class PollEndpoint(Resource):
 
         return resp
 
-    def put(self):
+    def post(self):
         args = request.json
         if args is None:
             abort(405, message="Only json request type is handled")

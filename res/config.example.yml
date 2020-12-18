@@ -4,3 +4,5 @@ secret_key: "your-secret-key"  # TODO: auto generate docker script
 # The secret key prepended to the file string
 file_hash_secret: "your-file-hash-secret"
 upload_dir: "/slash-followed-directory/"
+# Maximum upload size in bytes
+upload_max_size: 1048576 # 1MB

@@ -1,4 +1,4 @@
-from bson import ObjectId
+from models import UserInteraction
 
 
 def escape_special_chars(string: str):
@@ -14,3 +14,7 @@ def is_present_in_db(query: dict, table) -> bool:
 
 def get_user_id(token: str):
     return "000000000000000000000000"
+
+
+def get_user_info(request) -> UserInteraction:
+    return UserInteraction(request.remote_addr, str(request.user_agent))

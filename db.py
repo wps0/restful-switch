@@ -35,7 +35,7 @@ DOCUMENT_VOTE = '{' \
 
 DOCUMENT_FILE = '{' \
                 '"file_path": "%file_path%",' \
-                '"hash": %hash%,' \
+                '"hash": "%hash%",' \
                 '"uploader": %uploader%,' \
                 '"create_date": %create_date%' \
                 "}"

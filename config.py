@@ -1,12 +1,11 @@
 import sys
-import yaml
 
+import yaml
 from flask import Flask
 
 
 def init_config(app: Flask):
-    loaded_cfg = load_config()
-    insert_into_app_config(app, loaded_cfg)
+    insert_into_app_config(app, load_config())
 
 
 def load_config():

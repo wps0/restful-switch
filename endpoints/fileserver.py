@@ -2,7 +2,7 @@ import json
 import os
 from hashlib import sha256
 
-from flask import send_from_directory, request, jsonify
+from flask import send_from_directory, request
 from flask_restful import Resource, abort
 from pymongo.errors import DuplicateKeyError
 
@@ -19,7 +19,7 @@ def verify_file_hash(h: str):
         abort(400)
 
 
-class UUIDFileServerEndpoint(Resource):
+class HashDownloadFileEndpoint(Resource):
     def get(self, file_id: str):
         verify_file_hash(file_id)
         res = DB_TABLE_FILES.find_one({"hash": file_id})
@@ -35,7 +35,7 @@ class UUIDFileServerEndpoint(Resource):
 
 
 # https://phil.tech/2016/http-rest-api-file-uploads/
-class UploadFileEndpoint(Resource):
+class HashUploadFileEndpoint(Resource):
     def post(self):
         if request.content_length is None:
             abort(411, message="Required Content-Length header is missing")
@@ -45,7 +45,8 @@ class UploadFileEndpoint(Resource):
             abort(400)
         if request.content_length > app.config["UPLOAD_MAX_SIZE"]:
             abort(413, message="Request body too large")
-        data_hash = sha256(request.data)
+        data_hash = sha256(app.config["FILE_SECRET_KEY"].encode())
+        data_hash.update(request.data)
         uploaded_file = File(
             str("uploaded_" + get_user_id("asdf") + "_" + data_hash.hexdigest()),
             get_user_info(request),
@@ -59,5 +60,5 @@ class UploadFileEndpoint(Resource):
         if res.acknowledged and res.inserted_id is not None:
             with open(app.config["UPLOAD_DIR"] + os.path.sep + uploaded_file.file_path, "wb") as f:
                 f.write(request.data)
-            return jsonify(code=200, messsage="OK")
+            return {"message": "OK", "hash": data_hash.hexdigest()}
         abort(500)

@@ -9,11 +9,11 @@ Api prefix: `/v1`
  * `POST`: creates a new poll
 
 `/poll/<string:poll_id>` (*poll_id* - ObjectId-style id of a poll):
- * `GET`: returns the details of the poll
+ * `GET`: returns the details of a poll
  * `DELETE`: deletes the poll
  
 `/poll/<string:poll_id>/vote` (*poll_id* - ObjectId-style id of a poll):
- * `GET`: returns the amount of votes for every option in the poll
+ * `GET`: returns the amount of votes for every option in a poll
  * `POST`: adds a vote
 
 `/file`:

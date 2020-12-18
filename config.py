@@ -23,3 +23,4 @@ def insert_into_app_config(app: Flask, cfg):
     app.config['SECRET_KEY'] = cfg.get("secret_key")
     app.config["FILE_SECRET_KEY"] = cfg.get("file_hash_secret")
     app.config["UPLOAD_DIR"] = cfg.get("upload_dir")
+    app.config["UPLOAD_MAX_SIZE"] = cfg.get("upload_max_size")

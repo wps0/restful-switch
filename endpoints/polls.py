@@ -7,6 +7,8 @@ from flask import request, jsonify
 from flask_restful import Resource, abort
 
 from db import DB_TABLE_POLLS, DB_TABLE_VOTES
+from utils import is_present_in_db, get_user_id
+from models import Vote, UserInteraction, Option, Poll
 
 
 def verify_poll(poll_id: str):
@@ -27,21 +29,23 @@ class PollEndpoint(Resource):
 
     def put(self):
         args = request.json
+        if args is None:
+            abort(405, message="Only json request type is handled")
 
-        from models import Option, Poll
         options_list: List[Option] = []
-        # try:
-        for opt in args["options"]:
-            options_list.append(Option(opt["content"]))
+        try:
+            for opt in args["options"]:
+                options_list.append(Option(opt["content"]))
 
-        js_replaced = str(Poll(args["title"], time.time(), options_list, args["desc"], time.time()))
-        # except (KeyError, TypeError):
-        #     abort(400)
+            js_replaced = str(Poll(args["title"], time.time(), options_list, args["desc"], time.time()))
+        except (KeyError, TypeError):
+            abort(400, message="Not all of the required fields (title, desc, options, for each option: content) are "
+                               "present.")
 
         js_replaced = json.loads(js_replaced)
         res = DB_TABLE_POLLS.insert_one(js_replaced)
 
-        js_replaced["_id"] = str(js_replaced["_id"])
+        js_replaced["_id"] = str(res.inserted_id)
         return jsonify(code=200, data=js_replaced, messsage="OK")
 
 
@@ -51,7 +55,7 @@ class SinglePollEndpoint(Resource):
 
         resp = DB_TABLE_POLLS.find_one({"_id": ObjectId(poll_id)})
         if resp is None:
-            abort(404)
+            abort(404, message="Poll with the given id was not found.")
         resp["_id"] = str(resp["_id"])
         return jsonify(resp)
 
@@ -60,14 +64,14 @@ class SinglePollEndpoint(Resource):
 
         cnt = DB_TABLE_POLLS.count({"_id": ObjectId(poll_id)})
         if cnt != 1:
-            abort(404)
+            abort(404, message="Poll with the given id was not found.")
 
         res = DB_TABLE_POLLS.delete_one({"_id": ObjectId(poll_id)})
         if res is None:
-            abort(404)
+            abort(404, message="Cannot delete the poll with the given id.")
 
         if res.deleted_count != 1:
-            abort(500)
+            abort(500, message="Cannot delete the poll with the given id.")
         return "", 204
 
 
@@ -76,28 +80,30 @@ class PollVoteEndpoint(Resource):
         verify_poll(poll_id)
         nr: int = 0
         try:
-            print(request.json["option_nr"])
             nr = request.json["option_nr"]
         except (TypeError, KeyError):
-            abort(400)
+            abort(400, message="Required attribute option_id is missing.")
 
         res = DB_TABLE_POLLS.find_one({"_id": ObjectId(poll_id)})
         if res is None:
-            abort(404)
+            abort(404, message="Poll with the given id was not found.")
 
-        if 0 > nr or nr >= len(res["options"]):
-            abort(400)
+        if len(res["options"]) != 0 and (0 > nr or nr >= len(res["options"])):
+            abort(400, message="Required attribute option_nr is out of range.")
 
-        from models import Vote, UserInteraction
+        if is_present_in_db({"poll_id": poll_id, "voter.user_id": get_user_id("123")}, DB_TABLE_VOTES):
+            abort(403, message="User has already voted!")
+
         to_be_inserted = str(Vote(
             ObjectId(poll_id), nr, UserInteraction(request.remote_addr, str(request.user_agent))
         ))
         to_be_inserted = json.loads(to_be_inserted)
-        print(to_be_inserted)
 
         res = DB_TABLE_VOTES.insert_one(to_be_inserted)
         res = DB_TABLE_VOTES.find_one({"_id": ObjectId(res.inserted_id)})
         res["_id"] = str(res["_id"])
+
+        print(str(res))
         return res
 
     def get(self, poll_id: str):

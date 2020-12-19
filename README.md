@@ -30,4 +30,4 @@ curl --header "Content-Type: FILE_TYPE" --data-binary @"FILE_PATH" localhost:500
 ```  
 `FILE_TYPE` - the [MIME type](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types) of a file
 being uploaded, eg. `image/jpeg`  
-`FILE_PATH` - path to the file on your pc
+`FILE_PATH` - path to a file on your pc

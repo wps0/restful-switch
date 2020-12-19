@@ -62,12 +62,12 @@ class Poll:
     _id: ObjectId
     title: str
     desc: str
-    publish_date: float
-    create_date: float
+    publish_date: int
+    create_date: int
     options: List[Option]
 
-    def __init__(self, title: str, publish_date: float, options: List[Option], desc: str = "",
-                 create_date: float = time.time()):
+    def __init__(self, title: str, publish_date: int, options: List[Option], desc: str = "",
+                 create_date: int = time.time()):
         self.title = title
         self.desc = desc
         self.publish_date = publish_date

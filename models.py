@@ -1,104 +1,41 @@
 import time
-
-from typing import List
-from bson import ObjectId
-
-
-class UserInteraction:
-    user_id: ObjectId
-    create_date: int
-    ip_addr: str
-    conn_details: str
-
-    def __init__(self, ip_addr: str, conn_details: str, user_id: ObjectId = ObjectId("000000000000000000000000"),
-                 create_date: int = time.time()):
-        """
-            :arg user_id The id of the voting user. 0 - anonymous user
-        """
-        self.create_date = create_date
-        self.ip_addr = ip_addr
-        self.conn_details = conn_details
-        self.user_id = user_id
-
-    def __str__(self):
-        from db import DOCUMENT_USER_INTERACTION
-        return DOCUMENT_USER_INTERACTION \
-            .replace("%user_id%", str(self.user_id)) \
-            .replace("%create_date%", str(self.create_date)) \
-            .replace("%ip_addr%", self.ip_addr) \
-            .replace("%conn_details%", self.conn_details)
+import datetime as dt
+import mongoengine as me
 
 
-class Option:
-    content: str
-
-    def __init__(self, content: str):
-        self.content = content
-
-    def __str__(self):
-        from db import DOCUMENT_VOTE_OPTION
-        return DOCUMENT_VOTE_OPTION \
-            .replace("%content%", self.content)
+class User(me.Document):
+    id = me.ObjectIdField(primary_key=True)
+    username = me.StringField(required=True, unique=True, max_length=24, min_length=3)
+    create_date = me.DateTimeField(default=dt.datetime.utcnow)
+    last_login = me.DateTimeField(default=0)
 
 
-class Vote:
-    poll_id: ObjectId
-    content: int
-    voter: UserInteraction
-
-    def __init__(self, poll_id: ObjectId, option_nr: int, voter: UserInteraction):
-        self.option_nr = option_nr
-        self.poll_id = poll_id
-        self.voter = voter
-
-    def __str__(self):
-        from db import DOCUMENT_VOTE
-        return DOCUMENT_VOTE.replace("%poll_id%", str(self.poll_id)) \
-            .replace("%option_nr%", str(self.option_nr)) \
-            .replace("%voter%", str(self.voter))
+class UserInteraction(me.EmbeddedDocument):
+    ip_addr = me.StringField(max_length=64, required=True)
+    conn_details = me.StringField(max_length=8192)
+    create_date = me.DateTimeField(default=dt.datetime.utcnow)
 
 
-class Poll:
-    _id: ObjectId
-    title: str
-    desc: str
-    publish_date: float
-    create_date: float
-    options: List[Option]
-
-    def __init__(self, title: str, publish_date: float, options: List[Option], desc: str = "",
-                 create_date: float = time.time()):
-        self.title = title
-        self.desc = desc
-        self.publish_date = publish_date
-        self.create_date = create_date
-        self.options = options
-
-    def __str__(self):
-        from db import DOCUMENT_POLL
-        return DOCUMENT_POLL.replace("%title%", self.title) \
-            .replace("%desc%", self.desc) \
-            .replace("%publish_date%", str(self.publish_date)) \
-            .replace("%create_date%", str(self.create_date)) \
-            .replace("%options%", "[" + "".join((str(el) + "," for el in self.options)).rsplit(",", 1)[0] + "]")
+class Poll(me.Document):
+    id = me.ObjectIdField(primary_key=True)
+    title = me.StringField(max_length=96)
+    desc = me.StringField(max_length=512)
+    options = me.ListField(me.StringField(max_length=128), required=True)
+    creator_interaction = me.EmbeddedDocument(UserInteraction, required=True)
+    creator = me.ReferenceField(User, required=True)
+    publish_date = me.DateTimeField(default=3406320000, required=True)
 
 
-class File:
-    file_path: str
-    hash: str
-    uploader: UserInteraction
-    create_date: int
+class Vote(me.Document):
+    id = me.ObjectIdField(primary_key=True)
+    poll_id = me.ReferenceField(Poll)
+    option_id = me.IntField(min_value=0, max_value=32)
+    voter = me.ReferenceField(User)
+    voter_interaction = me.EmbeddedDocument(UserInteraction, required=True)
 
-    def __init__(self, file_path: str, uploader: UserInteraction, h: str, create_date: int = time.time()):
-        self.file_path = file_path
-        self.hash = h
-        self.uploader = uploader
-        self.create_date = create_date
 
-    def __str__(self):
-        from db import DOCUMENT_FILE
-        return DOCUMENT_FILE\
-            .replace("%create_date%", str(self.create_date)) \
-            .replace("%file_path%", self.file_path) \
-            .replace("%hash%", self.hash) \
-            .replace("%uploader%", str(self.uploader))
+class File(me.Document):
+    hash = me.StringField(primary_key=True)
+    file_path = me.StringField(required=True, unique=True)
+    uploader = me.ReferenceField(User, required=True)
+    uploader_interaction = me.EmbeddedDocument(UserInteraction, required=True)

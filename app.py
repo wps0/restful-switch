@@ -3,6 +3,7 @@ from flask_restful import Api
 
 import config
 
+
 def json_response_formatter(data, code, headers=None):
     import json
     resp = make_response(json.dumps({"code": code, "data": data}), code)

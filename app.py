@@ -2,9 +2,6 @@ from flask import Flask, make_response
 from flask_restful import Api
 
 import config
-from endpoints.fileserver import HashDownloadFileEndpoint, HashUploadFileEndpoint
-from endpoints.polls import PollEndpoint, SinglePollEndpoint, PollVoteEndpoint
-
 
 def json_response_formatter(data, code, headers=None):
     import json
@@ -24,6 +21,9 @@ class RestfulApi(Api):
 app = Flask(__name__)
 api = RestfulApi(app, prefix="/v1")
 config.init_config(app)
+
+from endpoints.fileserver import HashDownloadFileEndpoint, HashUploadFileEndpoint
+from endpoints.polls import PollEndpoint, SinglePollEndpoint, PollVoteEndpoint
 
 api.add_resource(PollEndpoint, "/poll")
 api.add_resource(SinglePollEndpoint, "/poll/<string:poll_id>")

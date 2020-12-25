@@ -1,7 +1,8 @@
+import config
+import mongoengine as me
+
 from flask import Flask, make_response
 from flask_restful import Api
-
-import config
 
 
 def json_response_formatter(data, code, headers=None):
@@ -22,6 +23,7 @@ class RestfulApi(Api):
 app = Flask(__name__)
 api = RestfulApi(app, prefix="/v1")
 config.init_config(app)
+me.connect(host=app.config["DB_URL"])
 
 from endpoints.fileserver import HashDownloadFileEndpoint, HashUploadFileEndpoint
 from endpoints.polls import PollEndpoint, SinglePollEndpoint, PollVoteEndpoint

@@ -7,7 +7,6 @@ from flask_restful import Resource, abort
 from pymongo.errors import DuplicateKeyError
 
 from app import app
-from db import DB_TABLE_FILES
 from models import File
 from utils import get_user_id, get_user_info
 

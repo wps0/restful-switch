@@ -6,9 +6,8 @@ from bson import ObjectId
 from flask import request, jsonify
 from flask_restful import Resource, abort
 
-from db import DB_TABLE_POLLS, DB_TABLE_VOTES
 from utils import is_present_in_db, get_user_id
-from models import Vote, UserInteraction, Option, Poll
+from models import Vote, UserInteraction, Poll
 
 
 def verify_poll(poll_id: str):
@@ -21,8 +20,9 @@ def verify_poll(poll_id: str):
 class PollEndpoint(Resource):
     def get(self):
         resp = []
-        for poll in DB_TABLE_POLLS.find({"publish_date": {"$lt": time.time()}}):
-            poll["_id"] = str(poll["_id"])
+        for poll in Poll.objects(publish_date__gte=time.time()):
+            # poll["_id"] = str(poll["_id"])
+            print(poll)
             resp.append(poll)
 
         return resp
@@ -32,31 +32,33 @@ class PollEndpoint(Resource):
         if args is None:
             abort(405, message="Only json request type is handled")
 
-        options_list: List[Option] = []
+        options_list: List[str] = []
         try:
             for opt in args["options"]:
-                options_list.append(Option(opt["content"]))
+                options_list.append(str(opt["content"]))  # TODO: jak sie zachowuje dla special chars mongo?
 
-            js_replaced = str(Poll(args["title"], time.time(), options_list, args["desc"], time.time()))
+            # TODO: lookup user token
+
+            poll: Poll = Poll()
         except (KeyError, TypeError):
             abort(400, message="Not all of the required fields (title, desc, options, for each option: content) are "
                                "present.")
 
-        js_replaced = json.loads(js_replaced)
-        res = DB_TABLE_POLLS.insert_one(js_replaced)
+        # js_replaced = json.loads(js_replaced)
+        # res = DB_TABLE_POLLS.insert_one(js_replaced)
 
-        js_replaced["_id"] = str(res.inserted_id)
-        return jsonify(code=200, data=js_replaced, messsage="OK")
+        # js_replaced["_id"] = str(res.inserted_id)
+        # return jsonify(code=200, data=js_replaced, messsage="OK")
+        return jsonify(code=200, data="ASD", messsage="OK")
 
 
 class SinglePollEndpoint(Resource):
     def get(self, poll_id: str):
         verify_poll(poll_id)
 
-        resp = DB_TABLE_POLLS.find_one({"_id": ObjectId(poll_id)})
+        resp = Poll.objects(id=ObjectId(poll_id))
         if resp is None:
             abort(404, message="Poll with the given id was not found.")
-        resp["_id"] = str(resp["_id"])
         return jsonify(resp)
 
     def delete(self, poll_id: str):
